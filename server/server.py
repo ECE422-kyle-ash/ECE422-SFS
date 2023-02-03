@@ -1,11 +1,14 @@
 import socket
 from multiprocessing import Process
 
+from serverConn import ServerConn
+
 class Server:
     # https://docs.python.org/3/howto/sockets.html
 
     def __init__(self, port=8080) -> None:
         self.port = port
+        self.conns = []
 
     def run(self) -> None:
         with socket.socket() as serversocket:
@@ -15,30 +18,11 @@ class Server:
 
             while True:
                 conn, addr = serversocket.accept()
-                thread = Process(target=self.__handle_connection, args=(conn, addr,), daemon=True)
+                self.conns.append(ServerConn(conn, addr))
+                thread = Process(target=self.conns[-1].run(), args=(conn, addr,), daemon=True)
                 thread.start()
                 thread.join()
         
-    def __handle_connection(self, conn, addr) -> None:
-        with conn: # ensures there is a connection
-            print(f"New connection to {addr}")
-            message = self.__receive(conn)
-            print(f"recieved message from {addr}: {message}")
-            
-
-    def __receive(self, conn):
-        chunks = []
-        bytes_recd = 0
-        while True:
-            chunk = conn.recv(1024)
-            if not chunk:
-                break
-            # print(f"received chunk: {chunk}")
-            chunks.append(chunk)
-        message = (b''.join(chunks)).decode('utf-8')
-        return message
-        
-
 
 if __name__ == '__main__':
     server = Server()

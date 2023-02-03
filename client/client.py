@@ -6,14 +6,14 @@ class Client:
         self.host = host
         self.port = port
 
-    def run(self):
+    def run(self) -> None:
         with socket.socket() as self.s:
             self.s.connect((self.host, self.port))
             self.__send(b'hello server')
 
             self.s.close()
 
-    def __send(self, data):
+    def __send(self, data) -> None:
         print(f'Sending message {data}')
         self.s.send(data)
     
