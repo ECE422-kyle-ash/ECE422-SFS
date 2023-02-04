@@ -1,19 +1,24 @@
 
 import sys
 import socket
-import selectors
 from multiprocessing import Process
 
 from serverConn import ServerConn
 
+# For how to use sockets:
+# https://docs.python.org/3/howto/sockets.html
+
+# For how to use selectors with sockets:
+# https://realpython.com/python-sockets/#ping
+
 class Server:
-    # https://docs.python.org/3/howto/sockets.html
 
     def __init__(self, port=8080) -> None:
         self.port = port
         self.conns = []
 
     def run(self) -> None:
+        print(f'Starting server on port: {self.port}')
         with socket.socket() as serversocket:
             serversocket.bind(('localhost', self.port))
             serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -39,6 +44,10 @@ class Server:
         
 
 if __name__ == '__main__':
-    server = Server()
+    if len(sys.argv) == 2:
+        port = sys.argv[1]
+        server = Server(int(port))
+    else:
+        server = Server()
     server.run()
     
