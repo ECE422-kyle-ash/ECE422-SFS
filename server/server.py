@@ -1,45 +1,53 @@
+
+import sys
 import socket
 from multiprocessing import Process
 
+from serverConn import ServerConn
+
+# For how to use sockets:
+# https://docs.python.org/3/howto/sockets.html
+
+# For how to use selectors with sockets:
+# https://realpython.com/python-sockets/#ping
+
 class Server:
-    # https://docs.python.org/3/howto/sockets.html
 
     def __init__(self, port=8080) -> None:
         self.port = port
+        self.conns = []
 
     def run(self) -> None:
+        print(f'Starting server on port: {self.port}')
         with socket.socket() as serversocket:
             serversocket.bind(('localhost', self.port))
             serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            serversocket.listen(2) # allow backlog of 2
+            serversocket.listen()
+            try:
+                while True:
+                    conn, addr = serversocket.accept()
+                    self.__spawn(conn, addr)
+            except KeyboardInterrupt:
+                self.__close(serversocket)
+    
+    def __spawn(self, conn, addr):
+        self.conns.append(ServerConn(conn, addr))
+        thread = Process(target=self.conns[-1].run(), args=(conn, addr,), daemon=True)
+        thread.start()
+        print(f'Connection to {addr} closed.')
+        thread.join()
 
-            while True:
-                conn, addr = serversocket.accept()
-                thread = Process(target=self.__handle_connection, args=(conn, addr,), daemon=True)
-                thread.start()
-                thread.join()
+    def __close(self, serversocket):
+        serversocket.shutdown(socket.SHUT_RDWR)
+        serversocket.close()
+        print ("closed")
         
-    def __handle_connection(self, conn, addr) -> None:
-        with conn: # ensures there is a connection
-            print(f"New connection to {addr}")
-            message = self.__receive(conn)
-            print(f"recieved message from {addr}: {message}")
-            
-
-    def __receive(self, conn):
-        chunks = []
-        bytes_recd = 0
-        while True:
-            chunk = conn.recv(1024)
-            if not chunk:
-                break
-            # print(f"received chunk: {chunk}")
-            chunks.append(chunk)
-        message = (b''.join(chunks)).decode('utf-8')
-        return message
-        
-
 
 if __name__ == '__main__':
-    server = Server()
+    if len(sys.argv) == 2:
+        port = sys.argv[1]
+        server = Server(int(port))
+    else:
+        server = Server()
     server.run()
+    
