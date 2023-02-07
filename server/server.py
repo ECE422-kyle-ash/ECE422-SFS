@@ -1,7 +1,7 @@
 
 import sys
 import socket
-from multiprocessing import Process
+import threading
 
 from serverConn import ServerConn
 
@@ -16,6 +16,7 @@ class Server:
     def __init__(self, port=8080) -> None:
         self.port = port
         self.conns = []
+        self.threads = []
 
     def run(self) -> None:
         print(f'Starting server on port: {self.port}')
@@ -32,12 +33,13 @@ class Server:
     
     def __spawn(self, conn, addr):
         self.conns.append(ServerConn(conn, addr))
-        thread = Process(target=self.conns[-1].run(), args=(conn, addr,), daemon=True)
+        thread = threading.Thread(target = self.conns[-1].run, args=(), daemon=True)
+        self.threads.append(thread)
         thread.start()
-        print(f'Connection to {addr} closed.')
-        thread.join()
 
     def __close(self, serversocket):
+        for connection in self.conns:
+            connection.close()
         serversocket.shutdown(socket.SHUT_RDWR)
         serversocket.close()
         print ("closed")

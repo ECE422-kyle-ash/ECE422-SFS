@@ -21,18 +21,19 @@ class ServerConn:
         while self.connOpen: ### main loop
             try:
                 # show client their current position in the SFS shell
-                self.__send(self.currentDir)
+                self.send(self.currentDir)
 
-                message = self.__receive()
+                message = self.receive()
                 if message:
                     print(f"recieved message from {self.addr}: {message}")
+                    pass
                 else: # client no longer responding
-                    self.__close()
+                    self.close()
             except Exception:
-                self.__close()
+                self.close()
 
     # This method listens for data sent by the client
-    def __receive(self) -> str:
+    def receive(self) -> str:
         data = self.conn.recv(BUFFER_SIZE)
         if not data:
             return
@@ -40,7 +41,7 @@ class ServerConn:
         return message
     
     # This method listens for data sent by the client in chunks, ending at a '\r\n' sequence
-    def __receiveChunks(self) -> str:
+    def receiveChunks(self) -> str:
         chunks = []
         while True:
             chunk = self.conn.recv(BUFFER_SIZE)
@@ -54,17 +55,19 @@ class ServerConn:
         message = (b''.join(chunks)).decode('utf-8')
         return message.rstrip('\r\n')
     
-    def __send(self, data) -> None:
+    def send(self, data) -> None:
         self.conn.send(data.encode('utf-8'))
 
-    def __sendFile(self, filename) -> bool:
+    def sendFile(self, filename) -> bool:
         # todo
         pass
 
-    def __receiveFile(self, filename) -> None:
+    def receiveFile(self, filename) -> None:
         # todo
         pass
     
-    def __close(self) -> None:
-        self.conn.close()
-        self.connOpen = False
+    def close(self) -> None:
+        if self.connOpen == True:
+            self.conn.close()
+            self.connOpen = False
+            print(f'Connection to {self.addr} closed.')
