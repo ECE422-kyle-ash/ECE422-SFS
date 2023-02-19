@@ -2,14 +2,9 @@
 import sys
 import socket
 import threading
+import logging
 
 from serverConn import ServerConn
-
-# For how to use sockets:
-# https://docs.python.org/3/howto/sockets.html
-
-# For how to use selectors with sockets:
-# https://realpython.com/python-sockets/#ping
 
 class Server:
 
@@ -19,8 +14,8 @@ class Server:
         self.threads = []
 
     def run(self) -> None:
-        print(f'Starting server on port: {self.port}')
-        with socket.socket() as serversocket:
+        logging.info(f'Starting server on port: {self.port}')
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serversocket:
             serversocket.bind(('localhost', self.port))
             serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             serversocket.listen()
@@ -42,10 +37,12 @@ class Server:
             connection.close()
         serversocket.shutdown(socket.SHUT_RDWR)
         serversocket.close()
-        print ("closed")
+        logging.info("Server closed...")
         
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.NOTSET)
+
     if len(sys.argv) == 2:
         port = sys.argv[1]
         server = Server(int(port))
