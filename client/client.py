@@ -8,7 +8,7 @@ from clientState import MainState
 from clientState import LoginState
 from clientState import ExchangeKeyState
 
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 2048
 
 class Client:
 
@@ -25,7 +25,7 @@ class Client:
     def run(self) -> None:
         # this is the main loop of our client connection
         self.s = socket.socket()
-        print(f"Connection to {self.host} on port {self.port}...")
+        print(f"Connecting to {self.host} on port {self.port}...")
         try:
             self.s.connect((self.host, self.port))
 
@@ -46,10 +46,6 @@ class Client:
         userinput = input(f'{self.currentDir}$ ')
         return userinput
 
-    def sendToken(self) -> None:
-        # todo
-        pass
-
     def send(self, data) -> None:
         crypto = self.fernet.encrypt(data.encode('utf-8'))
         self.s.send(crypto)
@@ -60,12 +56,36 @@ class Client:
             return
         message = self.fernet.decrypt(data).decode('utf-8')
         return message
-    
-    def encryptMSG(self, data) -> str:
-        return data
-    
-    def decrpytMSG(self, data) -> str:
-        return data
+
+    def sendFile(self, filepath: str) -> bool:
+        with open(filepath, 'rb') as f:
+            while True:
+                data = f.read(1024)
+                if not data:
+                    break
+                crypto = self.fernet.encrypt(data)
+                # print(f'data: {len(data)} crpyto: {len(crypto)}')
+                self.s.send(crypto)
+                try:
+                    if not self.receive() == 'OK':
+                        print('Unexpected response from server')
+                        self.close()
+                        return False
+                except:
+                    print('Error: No response from Server')
+                    return False
+            crypto = self.fernet.encrypt(b'\04')
+            self.s.send(crypto)
+            try:
+                if self.receive() == 'EOFOK':
+                    return True
+                else:
+                    print('Unexpected response from server')
+                    self.close()
+                    return False
+            except:
+                print('Error: No response from Server')
+                return False
 
     def close(self) -> None:
         self.s.close()
