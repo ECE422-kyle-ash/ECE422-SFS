@@ -9,7 +9,7 @@ from serverState import AuthenticateState
 # from serverState import LoginState
 from serverState import ExchangeKeyState
 
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 2048
 
 class ServerConn:
 
@@ -37,16 +37,24 @@ class ServerConn:
     def receiveChunks(self) -> str:
         chunks = []
         while True:
-            chunk = self.conn.recv(BUFFER_SIZE)
+            try:
+                chunk = self.conn.recv(BUFFER_SIZE)
+            except Exception as e:
+                logging.error(e)
             if not chunk: # client has disconnected
+                logging.error(f'Client: {self.addr} has disconnected during receiveChunks')
                 return
-            elif chunk.endswith(b'\r\n'):
-                chunks.append(chunk)
-                break
             # logging.debug(f"received chunk: {chunk}")
+            chunk = self.fernet.decrypt(chunk).decode('utf-8')
+            # print(f'<-----Start_Chunk----->{chunk}<-----End_Chunk----->')
             chunks.append(chunk)
-        message = (b''.join(chunks)).decode('utf-8')
-        return message.rstrip('\r\n')
+            if chunk.endswith('\x04'):
+                self.send('EOFOK')
+                # print('End of message')
+                message = (''.join(chunks))
+                return message.rstrip('\x04')
+            self.send('OK')
+            # print('OK')
     
     # This method listens for data sent by the client
     def receive(self) -> str:
@@ -64,9 +72,23 @@ class ServerConn:
         # todo
         pass
 
-    def receiveFile(self, filename) -> None:
-        # todo
-        pass
+    def receiveFile(self, filename) -> bool:
+        content = self.receiveChunks()
+        if content: # save file
+            logging.info(f'Received contents of: {filename} from: {self.addr}')
+            return self.saveFile(filename, content)
+        return False
+    
+    def saveFile(self, filename, content) -> bool: # todo ash
+        filepath = '../test/res_'+filename
+        logging.info(f'Saving content to {filepath}')
+        with open(filepath, 'w') as f:
+            try:
+                f.write(content)
+                f.close()
+                return True
+            except:
+                return False
     
     def close(self) -> None:
         if self.connOpen == True:

@@ -55,6 +55,41 @@ class MainState(State):
                 pass
             else: # client no longer responding
                 server.close()
+                return
+            tokens = message.split(' ')
+            if tokens[0] == 'ls': # show contends of dir
+                # 1 token
+                print('ls not implemented')
+
+            elif tokens[0] == 'cd': # change dir
+                # 2 tokens
+                print('cd not implemented')
+
+            elif tokens[0] == 'cat': # read file
+                # 2 tokens
+                print('cat not implemented')
+
+            elif tokens[0] == 'mkdir': # make dir
+                # 2 tokens
+                print('mkdir not implemented')
+
+            elif tokens[0] == 'rm': # remove file/directory
+                # 2 tokens
+                print('rm not implemented')
+
+            elif tokens[0] == 'mv': # move or rename file/dir
+                # 2 or 3 tokens
+                print('mv not implemented')
+
+            elif tokens[0] == 'send': # send file to server
+                # if user has permission to write file here:
+                server.send('sendOK')
+                if not server.receiveFile(tokens[1]):
+                    logging.error(f'Error: File not received')
+            
+            elif tokens[0] == 'get': # download file from server
+                # 2 arguments
+                print('get not implemented')
         except Exception:
             server.close()
         return
