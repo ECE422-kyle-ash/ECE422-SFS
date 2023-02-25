@@ -3,11 +3,7 @@ import logging
 from cryptography.fernet import Fernet
 
 from authenticator import Authenticator
-from serverState import State
-from serverState import MainState
-from serverState import AuthenticateState
-# from serverState import LoginState
-from serverState import ExchangeKeyState
+import serverState
 
 BUFFER_SIZE = 2048
 
@@ -19,7 +15,7 @@ class ServerConn:
         self.authenticator = Authenticator()
         self.connOpen = True
         self.currentDir = 'SFS-Shell:~'
-        self.state = State()
+        self.state = serverState.State()
         self.fernet = None
 
     # This is the main loop of our serverconnection threads
@@ -27,34 +23,10 @@ class ServerConn:
 
         logging.info(f"New connection to {self.addr}")
 
-        self.state = ExchangeKeyState()
+        self.state = serverState.ExchangeKeyState()
 
-        
         while self.connOpen: ### main loop
             self.state.run(server=self)
-    
-    # This method listens for data sent by the client in chunks, ending at a '\r\n' sequence
-    def receiveChunks(self) -> str:
-        chunks = []
-        while True:
-            try:
-                chunk = self.conn.recv(BUFFER_SIZE)
-            except Exception as e:
-                logging.error(e)
-            if not chunk: # client has disconnected
-                logging.error(f'Client: {self.addr} has disconnected during receiveChunks')
-                return
-            # logging.debug(f"received chunk: {chunk}")
-            chunk = self.fernet.decrypt(chunk).decode('utf-8')
-            # print(f'<-----Start_Chunk----->{chunk}<-----End_Chunk----->')
-            chunks.append(chunk)
-            if chunk.endswith('\x04'):
-                self.send('EOFOK')
-                # print('End of message')
-                message = (''.join(chunks))
-                return message.rstrip('\x04')
-            self.send('OK')
-            # print('OK')
     
     # This method listens for data sent by the client
     def receive(self) -> str:
@@ -71,6 +43,25 @@ class ServerConn:
     def sendFile(self, filename) -> bool:
         # todo
         pass
+
+    # This method listens for data sent by the client in chunks, ending at a '\r\n' sequence
+    def receiveChunks(self) -> str:
+        chunks = []
+        while True:
+            try:
+                chunk = self.conn.recv(BUFFER_SIZE)
+            except Exception as e:
+                logging.error(e)
+            if not chunk: # client has disconnected
+                logging.error(f'Client: {self.addr} has disconnected during receiveChunks')
+                return
+            chunk = self.fernet.decrypt(chunk).decode('utf-8')
+            chunks.append(chunk)
+            if chunk.endswith('\x04'):
+                self.send('EOFOK')
+                message = (''.join(chunks))
+                return message.rstrip('\x04')
+            self.send('OK')
 
     def receiveFile(self, filename) -> bool:
         content = self.receiveChunks()
