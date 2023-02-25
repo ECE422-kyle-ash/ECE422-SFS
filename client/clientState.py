@@ -7,12 +7,6 @@ class State:
     def run(self, client):
         return
 
-# class AuthenticateState(State): # not needed?
-
-#     def run(self, client):
-#         # do auth stuff
-#         return
-
 class LoginState(State):
 
     def run(self, client):
@@ -21,12 +15,13 @@ class LoginState(State):
 
         #success
         client.state = MainState()
-        return
 
+# This handles the initial key exchange between client and server
 class ExchangeKeyState(State):
 
     def run(self, client):
 
+        # receive the key and assign it to a block cipher through fernet
         key = client.s.recv(1024)
         client.fernet = Fernet(key)
 
@@ -38,6 +33,7 @@ class ExchangeKeyState(State):
             print("Key exchange failed")
             client.close()
 
+# This is the main loop of the client CLI and appliction
 class MainState(State):
 
     def __init__(self):
@@ -93,7 +89,7 @@ class MainState(State):
             print('mv not implemented')
 
         elif tokens[0] == 'send': # send file to server
-            # 2 arguments
+            # 2 tokens
             if len(tokens) == 2:
                 filepath = tokens[1].rstrip('/')
                 # check if file exists
@@ -115,12 +111,12 @@ class MainState(State):
                 else: # should never happen
                     print('Error: Unexpected message from server')
             else:
-                print(f'Improper use of send.\nSyntax: send <filename>')
+                print(f'Syntax: send <filename>')
         
-        elif tokens[0] == 'get': # download file from server
-            # 2 arguments
+        elif tokens[0] == 'download': # download file from server
+            # 2 tokens
             client.send(request)
-            print('get not implemented')
+            print('download not implemented')
 
         elif tokens[0] == 'exit':
             client.close()

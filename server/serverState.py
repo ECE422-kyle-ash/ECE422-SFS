@@ -15,19 +15,12 @@ class AuthenticateState(State):
 
         # success
         server.state = MainState()
-
-        return
-
-# class LoginState(State): # not needed?
-
-#     def run(self, server):
-#         # login stuff
-#         return
-
+    
 class ExchangeKeyState(State):
 
     def run(self, server):
 
+        # generate a key and save it to a block cipher through fernet
         key = Fernet.generate_key()
         server.fernet = Fernet(key)
 
@@ -49,13 +42,14 @@ class MainState(State):
             # show client their current position in the SFS shell
             server.send(server.currentDir)
 
+            # receive message from client
             message = server.receive()
-            if message:
+            if message: # we have message
                 logging.info(f"recieved message from {server.addr}: {message}")
-                pass
             else: # client no longer responding
                 server.close()
                 return
+            # parse message
             tokens = message.split(' ')
             if tokens[0] == 'ls': # show contends of dir
                 # 1 token
@@ -87,9 +81,9 @@ class MainState(State):
                 if not server.receiveFile(tokens[1]):
                     logging.error(f'Error: File not received')
             
-            elif tokens[0] == 'get': # download file from server
+            elif tokens[0] == 'download': # download file from server
                 # 2 arguments
-                print('get not implemented')
+                print('download not implemented')
         except Exception:
             server.close()
         return
