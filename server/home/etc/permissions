@@ -1,1 +1,1 @@
-path owner(encrypted username) perm(user/group/internal)
+path owner(encrypted username) perm(user/group/internal) checksum
