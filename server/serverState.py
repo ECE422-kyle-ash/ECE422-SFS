@@ -4,6 +4,8 @@ from cryptography.fernet import Fernet
 import os
 import encryption
 import re
+from simple_file_checksum import get_checksum
+import bcrypt
 class State:
 
     def run(self, server):
@@ -158,4 +160,112 @@ class MainState(State):
                 if(temp[0] == userID):
                     group = temp[1]
         return group
+    
+    def update_checksum(self,path):
+        perms_file = self.handler.etc+'/permissions'
+        owner, perm = self.getFilePermAndOwner(path)
+        old_checksum = self.grab_checksum(path)
+        new_checksum = get_checksum(path, algorithm="SHA256")
+        old_line = path+" "+owner+" "+perm+" "+old_checksum
+        new_line = path+" "+owner+" "+perm+" "+new_checksum
+        with open(perms_file, 'r') as f:
+            fdata = f.read()
+        fdata = fdata.replace(old_line,new_line)
+        with open(perms_file,'w') as f:
+            f.write(fdata)
+        f.close()
+    
+    def grab_checksum(self,path):
+        perms_file = self.handler.etc+'/permissions'
+        checksum = ""
+        with open(perms_file) as f:
+            lines = f.read().splitlines()
+            for line in lines:
+                temp = line.split(" ")
+                if(temp[0] == path):
+                    checksum = temp[3]
+        return checksum
+    # returns true, empty list if integrity check succeeded,  or false, list of decrypted file names whose integrity checks failed
+    def check_integrity(self,userID):
+        checkFailed = []
+        perms_file = self.handler.etc+'/permissions'
+        with open(perms_file) as f:
+            lines = f.read().splitlines()
+            for line in lines:
+                temp = line.split(" ")
+                if(temp[1] == userID):
+                    path = temp[0]
+                    if not os.path.isfile(path):
+                        checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
+                    elif get_checksum(path, algorithm="SHA256") != temp[3]:
+                        checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
+        if not checkFailed:
+            return True, checkFailed               
+        return False ,checkFailed
+    
+    def create_user(self, username, password):
+        users_file = self.handler.etc+'/users'
+        encrypted_username = self.handler.encrypt(username)
+        hashed_pw = bcrypt.hashpw(password.encode(),bcrypt.gensalt()).decode()
+        if self.check_username(encrypted_username):
+            with open(users_file,"a") as f:
+                f.write(encrypted_username+ " " + hashed_pw + " \n")
+            f.close()
+            return True
+        return False
+    
+    def check_username(self,username_encrypted):
+        users_file = self.handler.etc+'/users'
+        with open(users_file) as f:
+            lines = f.read().splitlines()
+            for line in lines:
+                temp = line.split(" ")
+                if(temp[0] == username_encrypted):
+                    return False
+        return True
+    
+    def set_group(self,username,groupname):
+        groups_file = self.handler.etc+'/permissions'
+        encrypted_username = self.handler.encrypt(username)
+        encrypted_groupname = self.handler.encrypt(groupname)
+        current_group = ""
+        with open(groups_file) as f:
+            lines = f.read().splitlines()
+            for line in lines:
+                temp = line.split(" ")
+                if(temp[0] == encrypted_username):
+                    current_group = temp[1]
+        if not current_group:
+            with open(groups_file,"a") as f:
+                f.write(encrypted_username+ " " + encrypted_groupname + " \n")
+            f.close()
+            return True
+        old_line = encrypted_username + " " + current_group
+        new_line = encrypted_username + " " + encrypted_groupname
+        with open(groups_file, 'r') as f:
+            fdata = f.read()
+        fdata = fdata.replace(old_line,new_line)
+        with open(groups_file,'w') as f:
+            f.write(fdata)
+        f.close()
         
+    def mkdir(self, name):
+        pass
+    
+    def touch(self, name):
+        pass
+    
+    def rename(self, current_name, new_name):
+        pass
+    
+    def rm(self, fname):
+        pass
+    
+    def chmod(self, fname, new_perm):
+        pass
+        
+        
+        
+                    
+
+    

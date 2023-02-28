@@ -10,6 +10,7 @@ Ashutosh Lamba - alamba
 ### Installation:
 
 pip install cryptography<br>
+sudo apt-get install build-essential cargo<br>
 
 ---------------
 ### References:

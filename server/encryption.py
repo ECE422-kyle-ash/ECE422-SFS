@@ -21,7 +21,7 @@ class EncryptionHandler:
         directories = path.split("/")
         encrypted = []
         for directory in directories:
-            if directory == '':
+            if directory == ''or directory == 'home':
                 continue
             if directory != '..' and directory != '.':
                 directory = self.encrypt(directory)
@@ -33,7 +33,7 @@ class EncryptionHandler:
         directories = path.split("/")
         decrypted = []
         for directory in directories:
-            if directory == '':
+            if directory == ''or directory == 'home':
                 continue
             if directory != '..' and directory != '.':
                 directory = self.decrypt(directory)
@@ -45,7 +45,7 @@ class EncryptionHandler:
         directories = path.split("/")
         encrypted = []
         for directory in directories:
-            if directory == '':
+            if directory == '' or directory == 'home':
                 continue
             if directory != '..' and directory != '.':
                 directory = self.encrypt(directory)
@@ -57,7 +57,7 @@ class EncryptionHandler:
         directories = path.split("/")
         decrypted = []
         for directory in directories:
-            if directory == '':
+            if directory == '' or directory == 'home':
                 continue
             if directory != '..' and directory != '.':
                 directory = self.decrypt(directory)
