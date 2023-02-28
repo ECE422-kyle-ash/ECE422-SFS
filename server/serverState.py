@@ -248,7 +248,18 @@ class MainState(State):
         with open(groups_file,'w') as f:
             f.write(fdata)
         f.close()
-        
+    #return true if username, password exist, false otherwise
+    def authenticate_user(self,username,password):
+        users_file = self.handler.etc+'/users'
+        username_encrypted = self.handler.encrypt(username)
+        with open(users_file) as f:
+            lines = f.read().splitlines()
+            for line in lines:
+                temp = line.split(" ")
+                if(temp[0] == username_encrypted and bcrypt.checkpw(password.encode(), temp[1].encode())):
+                    return True
+        return False
+    
     def mkdir(self, name):
         pass
     
@@ -263,7 +274,9 @@ class MainState(State):
     
     def chmod(self, fname, new_perm):
         pass
-        
+    
+    def echo(self, fname):
+        pass
         
         
                     
