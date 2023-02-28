@@ -248,6 +248,7 @@ class MainState(State):
         with open(groups_file,'w') as f:
             f.write(fdata)
         f.close()
+        
     #return true if username, password exist, false otherwise
     def authenticate_user(self,username,password):
         users_file = self.handler.etc+'/users'
