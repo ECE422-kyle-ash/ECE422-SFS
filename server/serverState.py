@@ -210,7 +210,7 @@ class MainState(State):
         perms_file = self.handler.etc+'/permissions'
         owner, perm = self.getFilePermAndOwner(path)
         old_checksum = self.grab_checksum(path)
-        new_checksum = get_checksum(path, algorithm="SHA256").decode()
+        new_checksum = get_checksum(path, algorithm="SHA256")
         old_line = path+" "+owner+" "+perm+" "+old_checksum
         new_line = path+" "+owner+" "+perm+" "+new_checksum
         with open(perms_file, 'r') as f:
@@ -257,7 +257,7 @@ class MainState(State):
                     if (not os.path.isfile(path) and not os.path.isdir(path)):
                         checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
                     elif os.path.isfile(path):
-                        if get_checksum(path, algorithm="SHA256").decode() != temp[3]:
+                        if get_checksum(path, algorithm="SHA256") != temp[3]:
                             checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
                     elif os.path.isdir(path):
                         if dirhash(path, 'sha256') != temp[3]:
@@ -294,11 +294,12 @@ class MainState(State):
     def mkdir(self, name):
         dir = self.handler.encryptPath(dir)
         abs = os.path.abspath(dir)
-        if self.check_permission(abs) and not os.path.isdir(abs):
+        parent = os.path.dirname(abs)
+        if self.check_permission(parent) and not os.path.isdir(abs):
             os.makedirs(abs)
             perms_file = self.handler.etc+'/permissions'
             with open(perms_file,"a") as f:
-                f.write(dir+ " " + self.current_user + " "+ "user" + " " + dirhash(abs, 'sha256') + " \n")
+                f.write(abs+ " " + self.current_user + " "+ "user" + " " + dirhash(abs, 'sha256') + " \n")
             f.close()
             return True
         return False
@@ -307,7 +308,18 @@ class MainState(State):
             
     
     def touch(self, name):
-        pass
+        dir = self.handler.encryptPath(dir)
+        abs = os.path.abspath(dir)
+        parent = os.path.dirname(abs)
+        if self.check_permission(parent) and not os.path.isfile(abs):
+            with open(abs, 'w') as f:
+                pass
+            perms_file = self.handler.etc+'/permissions'
+            with open(perms_file,"a") as f:
+                f.write(abs+ " " + self.current_user + " "+ "user" + " " + get_checksum(abs, algorithm="SHA256") + " \n")
+            f.close()
+            return True
+        return False 
     
     def rename(self, current_name, new_name):
         pass
@@ -318,9 +330,29 @@ class MainState(State):
     def chmod(self, fname, new_perm):
         pass
     
-    def echo(self, fname):
-        pass
-        
+    def echo(self, fname, text):
+        dir = self.handler.encryptPath(fname)
+        abs = os.path.abspath(dir)
+        parent = os.path.dirname(abs)
+        if self.check_permission(abs) and os.path.isfile(abs):
+            with open(abs, 'w') as f:
+                f.write(self.handler.encrypt(text))
+            f.close()
+            self.update_checksum(abs)
+            self.update_checksum_dir(parent)
+            return True
+        return False 
+    
+    def view_text(self, fname):
+        dir = self.handler.encryptPath(fname)
+        abs = os.path.abspath(dir)
+        parent = os.path.dirname(abs)
+        data = ""
+        if self.check_permission(abs) and os.path.isfile(abs):
+            with open(abs, 'r') as f:
+                data = self.handler.decrypt(f.read())
+            f.close()
+        return data 
         
                     
 
