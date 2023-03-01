@@ -6,6 +6,7 @@ import logging
 
 from serverConn import ServerConn
 from encryption import EncryptionHandler
+from authenticator import Authenticator
 
 class Server:
 
@@ -15,6 +16,8 @@ class Server:
         self.threads = []
 
     def run(self) -> None:
+        thread = threading.Thread(target = self.listen, args=(), daemon=True)
+        thread.start()
         logging.info(f'Starting server on port: {self.port}')
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serversocket:
             serversocket.bind(('localhost', self.port))
@@ -34,9 +37,49 @@ class Server:
         thread.start()
 
     def listen(self):
+
+        def set_group(username,groupname):
+            handler = EncryptionHandler()
+            groups_file = handler.etc+'/groups'
+            encrypted_username = handler.encrypt(username)
+            encrypted_groupname = handler.encrypt(groupname)
+            current_group = ""
+            with open(groups_file) as f:
+                lines = f.read().splitlines()
+                for line in lines:
+                    temp = line.split(" ")
+                    if(temp[0] == encrypted_username):
+                        current_group = temp[1]
+            if not current_group:
+                with open(groups_file,"a") as f:
+                    f.write(encrypted_username+ " " + encrypted_groupname + " \n")
+                f.close()
+                return True
+            old_line = encrypted_username + " " + current_group
+            new_line = encrypted_username + " " + encrypted_groupname
+            with open(groups_file, 'r') as f:
+                fdata = f.read()
+            fdata = fdata.replace(old_line,new_line)
+            with open(groups_file,'w') as f:
+                f.write(fdata)
+            f.close()
+
         handler = EncryptionHandler()
+        authenticator = Authenticator()
         while True:
             admin_input = input()
+            if admin_input == 'add user':
+                username = input('Username: ')
+                if not authenticator.check_username(handler.encrypt(username)):
+                    groupname = input('Groupname: ')
+                    set_group(username, groupname)
+                    print(f'{username} added to {groupname}')
+                else:
+                    print('User does not exist.')
+            elif admin_input == 'add group':
+                groupname = input('Groupname: ')
+                # create group
+                print(f'{groupname} created as group')
 
     def __close(self, serversocket):
         for connection in self.conns:
