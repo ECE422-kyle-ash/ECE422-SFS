@@ -224,7 +224,7 @@ class MainState(State):
         perms_file = self.handler.etc+'/permissions'
         owner, perm = self.getFilePermAndOwner(path)
         old_checksum = self.grab_checksum(path)
-        new_checksum = dirhash(path, 'sha256').decode()
+        new_checksum = dirhash(path, 'sha256')
         old_line = path+" "+owner+" "+perm+" "+old_checksum
         new_line = path+" "+owner+" "+perm+" "+new_checksum
         with open(perms_file, 'r') as f:
@@ -260,7 +260,7 @@ class MainState(State):
                         if get_checksum(path, algorithm="SHA256").decode() != temp[3]:
                             checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
                     elif os.path.isdir(path):
-                        if dirhash(path, 'sha256').decode() != temp[3]:
+                        if dirhash(path, 'sha256') != temp[3]:
                             checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
         if not checkFailed:
             return True, checkFailed               
@@ -298,7 +298,7 @@ class MainState(State):
             os.makedirs(abs)
             perms_file = self.handler.etc+'/permissions'
             with open(perms_file,"a") as f:
-                f.write(dir+ " " + self.current_user + " "+ "user" + " " + dirhash(abs, 'sha256').decode() + " \n")
+                f.write(dir+ " " + self.current_user + " "+ "user" + " " + dirhash(abs, 'sha256') + " \n")
             f.close()
             return True
         return False
