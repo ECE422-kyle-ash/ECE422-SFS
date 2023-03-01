@@ -303,7 +303,7 @@ class MainState(State):
         f.close()
     
     def mkdir(self, name):
-        dir = self.handler.encryptPath(dir)
+        dir = self.handler.encryptPath(name)
         abs = os.path.abspath(dir)
         parent = os.path.dirname(abs)
         if self.check_permission(parent) and not os.path.isdir(abs):
@@ -319,17 +319,18 @@ class MainState(State):
             
     
     def touch(self, name):
-        dir = self.handler.encryptPath(dir)
+        dir = self.handler.encryptPath(name)
         abs = os.path.abspath(dir)
         parent = os.path.dirname(abs)
-        if self.check_permission(parent) and not os.path.isfile(abs):
-            with open(abs, 'w') as f:
-                pass
-            perms_file = self.handler.etc+'/permissions'
-            with open(perms_file,"a") as f:
-                f.write(abs+ " " + self.current_user + " "+ "user" + " " + get_checksum(abs, algorithm="SHA256") + " \n")
-            f.close()
-            return True
+        if(name[-4:] == ".txt"):
+            if self.check_permission(parent) and not os.path.isfile(abs):
+                with open(abs, 'w') as f:
+                    pass
+                perms_file = self.handler.etc+'/permissions'
+                with open(perms_file,"a") as f:
+                    f.write(abs+ " " + self.current_user + " "+ "user" + " " + get_checksum(abs, algorithm="SHA256") + " \n")
+                f.close()
+                return True
         return False 
     
     def rename(self, current_name, new_name):
