@@ -109,6 +109,7 @@ class MainState(State):
         self.menu.append('echo <fileName> <file_contents> - append text to a text file')
         self.menu.append('rm <fileName> - delete a file')
         self.menu.append('rename <fileName> <new_fileName> - rename a file')
+        self.menu.append('chmod <name> <permission> - change file/directory permissions\nvalid permissions types" [\'internal\', \'user\', \'group\']')
         self.menu.append('menu - display this menu')
         self.menu.append('exit - exit the SFS Shell\n')
 
@@ -206,14 +207,40 @@ class MainState(State):
 
         elif tokens[0] == 'rm': # remove file/directory
             # 2 tokens
-            client.send(request)
-            print('rm not implemented')
+            if len(tokens)==2:
+                client.send(request)
+                response = client.receive()
+                if response == 'rm fail':
+                    print('insufficient access or file does not exist')
+            else:
+                print('Usage: rm <fileName>')
+                self.isReceiving = False
+                return
 
-        elif tokens[0] == 'rename': # move or rename file/dir
-            # 2 or 3 tokens
-            client.send(request)
-            print('rename not implemented')
+        elif tokens[0] == 'rename': # rename file
+            # 3 tokens
+            if len(tokens)==3:
+                client.send(request)
+                response = client.receive()
+                if response == 'rename fail':
+                    print('insufficient access or file does not exist')
+            else:
+                print('Usage: rename <fileName> <newName>')
+                self.isReceiving = False
+                return
 
+        elif tokens[0] == 'chmod':
+            # 3 tokens
+            if len(tokens[0]) == 3:
+                client.send(request)
+                response = client.receive()
+                if response == 'chmod fail':
+                    print('insufficient access/permission or file/dir does not exist')
+            else:
+                print('Usage: chmod <name> <permission>')
+                self.isReceiving = False
+                return
+            
         elif tokens[0] == 'menu':
             self.print_menu()
             self.isReceiving = False
