@@ -33,7 +33,7 @@ class EncryptionHandler:
 
         return "/".join(encrypted)
 
-    def decryptPath(self, key, path):
+    def decryptPath(self, path):
         directories = path.split("/")
         decrypted = []
         for directory in directories:
@@ -57,7 +57,7 @@ class EncryptionHandler:
 
         return self.home + "/".join(encrypted)
 
-    def getDecryptedPath(self, key, path):
+    def getDecryptedPath(self, path):
         directories = path.split("/")
         decrypted = []
         for directory in directories:

@@ -8,7 +8,7 @@ from clientState import MainState
 from clientState import LoginState
 from clientState import ExchangeKeyState
 
-BUFFER_SIZE = 2048
+BUFFER_SIZE = 4096
 
 class Client:
 
