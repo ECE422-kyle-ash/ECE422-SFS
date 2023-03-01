@@ -161,11 +161,28 @@ class MainState(State):
 
             elif tokens[0] == 'rm': # remove file/directory
                 # 2 tokens
-                print('rm not implemented')
+                file = tokens[1]
+                if self.rm(file):
+                    server.send('rm OK')
+                else:
+                    server.send('rm fail')
 
-            elif tokens[0] == 'rename': # move or rename file/dir
-                # 2 or 3 tokens
-                print('mv not implemented')
+            elif tokens[0] == 'rename': # rename file
+                # 3 tokens
+                file = tokens[1]
+                new_name = tokens[2]
+                if self.rename(file,new_name):
+                    server.send('rename OK')
+                else:
+                    server.send('rename fail')
+
+            elif tokens[0] == 'chmod':
+                file = tokens[1]
+                perm = tokens[2]
+                if self.chmod(file, perm):
+                    server.send('chmod OK')
+                else:
+                    server.send('chmod fail')
 
             # elif tokens[0] == 'send': # send file to server
             #     # if user has permission to write file here:
@@ -371,7 +388,7 @@ class MainState(State):
         if self.check_permission(abs) and os.path.isfile(abs):
             os.rename(abs,self.handler.encrypt(new_name))
             perms_file = self.handler.etc+'/permissions'
-            with open(perms_file,"w") as f:
+            with open(perms_file,"r+") as f:
                 lines = f.read().splitlines()
                 for line in lines:
                     temp = line.split(" ")
@@ -391,7 +408,7 @@ class MainState(State):
         if self.check_permission(abs) and os.path.isfile(abs):
             os.remove(abs)
             perms_file = self.handler.etc+'/permissions'
-            with open(perms_file,"w") as f:
+            with open(perms_file,"r+") as f:
                 lines = f.read().splitlines()
                 for line in lines:
                     temp = line.split(" ")
@@ -411,7 +428,7 @@ class MainState(State):
         if ((new_perm == "user" or new_perm == "group" or new_perm == "internal" )and self.current_user == owner):
             if self.check_permission(abs) and os.path.isfile(abs):
                 perms_file = self.handler.etc+'/permissions'
-                with open(perms_file,"w") as f:
+                with open(perms_file,"r+") as f:
                     lines = f.read().splitlines()
                     for line in lines:
                         temp = line.split(" ")
