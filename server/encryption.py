@@ -1,6 +1,8 @@
 from cryptography.fernet import Fernet
 import encryption
 import os
+import time
+
 class EncryptionHandler:
     def __init__(self) -> None:
         self.key = b'uH7165Y3br4X2CyRKNXH_ENLHESfsEnNKYD2fz3xtBk='
@@ -8,10 +10,12 @@ class EncryptionHandler:
         self.realpath = os.path.dirname(os.path.realpath(__file__))
         self.home = self.realpath+'/home'
         self.etc = self.home+'/etc'
+        self.time = 1677646702
+        self.iv = b'v\xe5X\xe5\xbd\xe1\x14\x85\xb4?L\xba\x1b\xa1\x03\xd8'
     
     #returns string of encrypted text string
     def encrypt(self,text):
-        return self.fernet.encrypt(text.encode()).decode()
+        return self.fernet._encrypt_from_parts(text.encode(), self.time, self.iv).decode()
     
     #returns string of decrypted text string
     def decrypt(self,text):
