@@ -43,6 +43,9 @@ class LoginState(State):
             client.send(f'login {username} {password}')
             response = client.receive()
             if response == 'Login Success':
+                response = client.receive()
+                if response != 'integrity okay':
+                    print(response)
                 client.state = MainState()
             else:
                 print('\nIncorrect username and/or password.\n')

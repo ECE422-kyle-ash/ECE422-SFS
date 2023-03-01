@@ -7,6 +7,7 @@ import os
 import encryption
 import re
 from simple_file_checksum import get_checksum
+from checksumdir import dirhash
 import bcrypt
 
 from authenticator import Authenticator
@@ -34,7 +35,12 @@ class AuthenticateState(State):
                 server.send('Create Failed')
         elif tokens[0] == 'login':
             if (self.authenticator.authenticate_user(tokens[1], tokens[2])):
+                (check, files) = self.authenticator.check_integrity(self.handler.encrypt(tokens[1]))
                 server.send('Login Success')
+                if not check:
+                    server.send('the following files and directories were modified\n'+"\n".join(files))
+                else:
+                    server.send('integrity okay')
                 self.login_user(server, tokens[1])
                 return
             else:
@@ -204,7 +210,21 @@ class MainState(State):
         perms_file = self.handler.etc+'/permissions'
         owner, perm = self.getFilePermAndOwner(path)
         old_checksum = self.grab_checksum(path)
-        new_checksum = get_checksum(path, algorithm="SHA256")
+        new_checksum = get_checksum(path, algorithm="SHA256").decode()
+        old_line = path+" "+owner+" "+perm+" "+old_checksum
+        new_line = path+" "+owner+" "+perm+" "+new_checksum
+        with open(perms_file, 'r') as f:
+            fdata = f.read()
+        fdata = fdata.replace(old_line,new_line)
+        with open(perms_file,'w') as f:
+            f.write(fdata)
+        f.close()
+    
+    def update_checksum_dir(self,path):
+        perms_file = self.handler.etc+'/permissions'
+        owner, perm = self.getFilePermAndOwner(path)
+        old_checksum = self.grab_checksum(path)
+        new_checksum = dirhash(path, 'sha256').decode()
         old_line = path+" "+owner+" "+perm+" "+old_checksum
         new_line = path+" "+owner+" "+perm+" "+new_checksum
         with open(perms_file, 'r') as f:
@@ -234,10 +254,14 @@ class MainState(State):
                 temp = line.split(" ")
                 if(temp[1] == userID):
                     path = temp[0]
-                    if not os.path.isfile(path):
+                    if (not os.path.isfile(path) and not os.path.isdir(path)):
                         checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
-                    elif get_checksum(path, algorithm="SHA256") != temp[3]:
-                        checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
+                    elif os.path.isfile(path):
+                        if get_checksum(path, algorithm="SHA256").decode() != temp[3]:
+                            checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
+                    elif os.path.isdir(path):
+                        if dirhash(path, 'sha256').decode() != temp[3]:
+                            checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
         if not checkFailed:
             return True, checkFailed               
         return False ,checkFailed
@@ -268,7 +292,19 @@ class MainState(State):
         f.close()
     
     def mkdir(self, name):
-        pass
+        dir = self.handler.encryptPath(dir)
+        abs = os.path.abspath(dir)
+        if self.check_permission(abs) and not os.path.isdir(abs):
+            os.makedirs(abs)
+            perms_file = self.handler.etc+'/permissions'
+            with open(perms_file,"a") as f:
+                f.write(dir+ " " + self.current_user + " "+ "user" + " " + dirhash(abs, 'sha256').decode() + " \n")
+            f.close()
+            return True
+        return False
+    
+    
+            
     
     def touch(self, name):
         pass
