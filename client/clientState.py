@@ -118,7 +118,6 @@ class MainState(State):
             print(item)
 
     def run(self, client):
-        
         if self.isReceiving: # grab response from server...
             try:
                 message = client.receive()
@@ -132,10 +131,9 @@ class MainState(State):
                     print('Error: Unexpected message from server')
                     client.close()
                     return
-            except TimeoutError:
+            except Exception:
                 client.send('resend')
                 return
-
         # get user input
         request = client.readInput()
         # determine desired request
@@ -235,7 +233,7 @@ class MainState(State):
 
         elif tokens[0] == 'chmod':
             # 3 tokens
-            if len(tokens[0]) == 3:
+            if len(tokens) == 3:
                 client.send(request)
                 response = client.receive()
                 if response == 'chmod fail':

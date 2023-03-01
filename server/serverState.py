@@ -9,9 +9,8 @@ import re
 from simple_file_checksum import get_checksum
 from checksumdir import dirhash
 import bcrypt
-
 from authenticator import Authenticator
-
+import time
 class State:
 
     def run(self, server):
@@ -98,10 +97,10 @@ class MainState(State):
     current_dir = ""
     def run(self, server):
         try:
+            time.sleep(0.2)
             # show client their current position in the SFS shell
             self.current_dir = os.getcwd().replace(self.handler.realpath,'')
             server.send(self.base_dir + self.handler.decryptPath(path=self.current_dir))
-
             # receive message from client
             message = server.receive()
             if message: # we have message
@@ -388,17 +387,22 @@ class MainState(State):
         if self.check_permission(abs) and os.path.isfile(abs):
             os.rename(abs,self.handler.encrypt(new_name))
             perms_file = self.handler.etc+'/permissions'
+            data = ""
+            with open(perms_file,"r") as r:
+                data = r.readlines()
+            r.close()
             with open(perms_file,"r+") as f:
-                lines = f.read().splitlines()
+                lines = data
                 for line in lines:
                     temp = line.split(" ")
                     if(temp[0] == abs):
-                        temp[0] = self.handler.encrypt(os.path.abspath(new_name))
-                        temp[3] = get_checksum(os.path.abspath(new_name), algorithm="SHA256")
+                        temp[0] = self.handler.encryptPath(os.path.abspath(self.handler.encrypt(new_name)))
+                        temp[3] = get_checksum(os.path.abspath(self.handler.encrypt(new_name)), algorithm="SHA256")
                         line = ' '.join(temp)
                     f.write(line) 
             f.close()
-            self.update_checksum(parent)
+            self.update_checksum()
+            self.update_checksum_dir(parent)
             return True
     
     def rm(self, fname):
@@ -408,16 +412,18 @@ class MainState(State):
         if self.check_permission(abs) and os.path.isfile(abs):
             os.remove(abs)
             perms_file = self.handler.etc+'/permissions'
-            with open(perms_file,"r+") as f:
-                lines = f.read().splitlines()
+            with open(perms_file,"r") as r:
+                data = r.readlines()
+            r.close()
+            with open(perms_file,"w") as f:
+                lines = data
                 for line in lines:
                     temp = line.split(" ")
-                    if(temp[0] == abs):
-                        continue
-                    f.write(line)
+                    if(temp[0] != abs):
+                        f.write(line)
                     
             f.close()
-            self.update_checksum(parent)
+            self.update_checksum_dir(parent)
             return True
         return False 
     
@@ -426,10 +432,14 @@ class MainState(State):
         abs = os.path.abspath(dir)
         (owner, perm) = self.getFilePermAndOwner(abs)
         if ((new_perm == "user" or new_perm == "group" or new_perm == "internal" )and self.current_user == owner):
+            data = ""
             if self.check_permission(abs) and os.path.isfile(abs):
                 perms_file = self.handler.etc+'/permissions'
+                with open(perms_file,"r") as r:
+                    data = r.readlines()
+                r.close()
                 with open(perms_file,"r+") as f:
-                    lines = f.read().splitlines()
+                    lines = data
                     for line in lines:
                         temp = line.split(" ")
                         if(temp[0] == abs):
