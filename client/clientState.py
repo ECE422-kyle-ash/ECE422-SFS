@@ -138,12 +138,15 @@ class MainState(State):
         if tokens[0] == 'ls': # show contends of dir
             # 1 token
             client.send(request)
-            print('ls not implemented')
+            print(client.receive())
 
         elif tokens[0] == 'cd': # change dir
             # 2 tokens
-            client.send(request)
-            print('cd not implemented')
+            if len(tokens) == 2:
+                client.send(request)
+            else:
+                print('Usage: cd <dirName>')
+                self.isReceiving = False
 
         elif tokens[0] == 'cat': # read file
             # 2 tokens
@@ -154,6 +157,16 @@ class MainState(State):
             # 2 tokens
             client.send(request)
             print('mkdir not implemented')
+        
+        elif tokens[0] == 'touch': # make dir
+            # 2 tokens
+            client.send(request)
+            print('touch not implemented')
+        
+        elif tokens[0] == 'echo': # make dir
+            # 2 tokens
+            client.send(request)
+            print('echo not implemented')
 
         elif tokens[0] == 'rm': # remove file/directory
             # 2 tokens
@@ -163,7 +176,12 @@ class MainState(State):
         elif tokens[0] == 'rename': # move or rename file/dir
             # 2 or 3 tokens
             client.send(request)
-            print('mv not implemented')
+            print('rename not implemented')
+
+        elif tokens[0] == 'menu': # make dir
+            # 2 tokens
+            client.send(request)
+            print('menu not implemented')
 
         # elif tokens[0] == 'send': # send file to server
         #     # 2 tokens

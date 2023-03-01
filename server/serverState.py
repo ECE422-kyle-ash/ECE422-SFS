@@ -51,6 +51,10 @@ class AuthenticateState(State):
         server.state.username = username
         server.state.current_user = self.handler.encrypt(username)
         server.state.base_dir = f'[{username}@SFS-Shell]:~'
+        try:
+            os.chdir(self.handler.home + f'/{self.handler.encrypt(username)}')
+        except:
+            print(os.getcwd())
     
 class ExchangeKeyState(State):
 
@@ -95,7 +99,8 @@ class MainState(State):
     def run(self, server):
         try:
             # show client their current position in the SFS shell
-            server.send(self.base_dir + self.current_dir)
+            self.current_dir = os.getcwd().replace(self.handler.realpath,'')
+            server.send(self.base_dir + self.handler.decryptPath(path=self.current_dir))
 
             # receive message from client
             message = server.receive()
@@ -107,12 +112,15 @@ class MainState(State):
             # parse message
             tokens = message.split(' ')
             if tokens[0] == 'ls': # show contends of dir
-                # 1 token
-                print('ls not implemented')
+                ls = self.ls()
+                if ls:
+                    server.send(ls)
+                else:
+                    server.send("")
 
             elif tokens[0] == 'cd': # change dir
                 # 2 tokens
-                print('cd not implemented')
+                self.cd(tokens[1])
 
             elif tokens[0] == 'cat': # read file
                 # 2 tokens
