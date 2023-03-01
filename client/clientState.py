@@ -131,7 +131,7 @@ class MainState(State):
                     print('Error: Unexpected message from server')
                     client.close()
                     return
-            except TimeoutError:
+            except Exception:
                 client.send('resend')
                 return
         # get user input

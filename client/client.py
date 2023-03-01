@@ -28,7 +28,7 @@ class Client:
         print(f"Connecting to {self.host} on port {self.port}...")
         try:
             self.s.connect((self.host, self.port))
-            self.s.settimeout(2)
+            self.s.settimeout(5)
 
             self.state = ExchangeKeyState()
 

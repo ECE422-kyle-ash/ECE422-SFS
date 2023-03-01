@@ -10,7 +10,7 @@ from simple_file_checksum import get_checksum
 from checksumdir import dirhash
 import bcrypt
 from authenticator import Authenticator
-
+import time
 class State:
 
     def run(self, server):
@@ -97,6 +97,7 @@ class MainState(State):
     current_dir = ""
     def run(self, server):
         try:
+            time.sleep(0.2)
             # show client their current position in the SFS shell
             self.current_dir = os.getcwd().replace(self.handler.realpath,'')
             server.send(self.base_dir + self.handler.decryptPath(path=self.current_dir))
@@ -388,10 +389,10 @@ class MainState(State):
             perms_file = self.handler.etc+'/permissions'
             data = ""
             with open(perms_file,"r") as r:
-                data = r.read()
+                data = r.readlines()
             r.close()
             with open(perms_file,"r+") as f:
-                lines = data.splitlines()
+                lines = data
                 for line in lines:
                     temp = line.split(" ")
                     if(temp[0] == abs):
@@ -412,10 +413,10 @@ class MainState(State):
             os.remove(abs)
             perms_file = self.handler.etc+'/permissions'
             with open(perms_file,"r") as r:
-                data = r.read()
+                data = r.readlines()
             r.close()
             with open(perms_file,"w") as f:
-                lines = data.splitlines()
+                lines = data
                 for line in lines:
                     temp = line.split(" ")
                     if(temp[0] != abs):
@@ -435,10 +436,10 @@ class MainState(State):
             if self.check_permission(abs) and os.path.isfile(abs):
                 perms_file = self.handler.etc+'/permissions'
                 with open(perms_file,"r") as r:
-                    data = r.read()
+                    data = r.readlines()
                 r.close()
                 with open(perms_file,"r+") as f:
-                    lines = data.splitlines()
+                    lines = data
                     for line in lines:
                         temp = line.split(" ")
                         if(temp[0] == abs):
