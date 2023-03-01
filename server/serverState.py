@@ -44,6 +44,7 @@ class AuthenticateState(State):
         server.state = MainState()
         server.state.username = username
         server.state.current_user = self.handler.encrypt(username)
+        server.state.base_dir = f'[{username}@SFS-Shell]:~'
     
 class ExchangeKeyState(State):
 
@@ -83,10 +84,12 @@ class MainState(State):
     cwd = '/test'
     current_user = ""
     username = ""
+    base_dir = ""
+    current_dir = ""
     def run(self, server):
         try:
             # show client their current position in the SFS shell
-            server.send(server.currentDir)
+            server.send(self.base_dir + self.current_dir)
 
             # receive message from client
             message = server.receive()
@@ -117,7 +120,7 @@ class MainState(State):
                 # 2 tokens
                 print('rm not implemented')
 
-            elif tokens[0] == 'mv': # move or rename file/dir
+            elif tokens[0] == 'rename': # move or rename file/dir
                 # 2 or 3 tokens
                 print('mv not implemented')
 

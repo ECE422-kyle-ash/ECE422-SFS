@@ -135,7 +135,7 @@ class MainState(State):
             client.send(request)
             print('rm not implemented')
 
-        elif tokens[0] == 'mv': # move or rename file/dir
+        elif tokens[0] == 'rename': # move or rename file/dir
             # 2 or 3 tokens
             client.send(request)
             print('mv not implemented')

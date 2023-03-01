@@ -14,7 +14,6 @@ class ServerConn:
         self.addr = addr
         self.authenticator = Authenticator()
         self.connOpen = True
-        self.currentDir = 'SFS-Shell:~'
         self.state = serverState.State()
         self.fernet = None
 
