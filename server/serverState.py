@@ -38,7 +38,7 @@ class AuthenticateState(State):
                 (check, files) = self.authenticator.check_integrity(self.handler.encrypt(tokens[1]))
                 server.send('Login Success')
                 if not check:
-                    server.send('the following files and directories were modified\n'+"\n".join(files))
+                    server.send('\nIMPORTANT!!!\nThe following files and directories were modified\n'+"\n".join(files))
                 else:
                     server.send('integrity okay')
                 self.login_user(server, tokens[1])
@@ -116,19 +116,48 @@ class MainState(State):
                 if ls:
                     server.send(ls)
                 else:
-                    server.send("")
+                    server.send(' ')
 
             elif tokens[0] == 'cd': # change dir
                 # 2 tokens
-                self.cd(tokens[1])
+                cd = self.cd(tokens[1])
+                if cd != 'success':
+                    server.send(cd)
+                else:
+                    server.send(' ')
 
             elif tokens[0] == 'cat': # read file
                 # 2 tokens
-                print('cat not implemented')
+                text = self.view_text(tokens[1])
+                if not text:
+                    server.send('cat fail')
+                elif text == '':
+                    server.send(' ')
+                elif not text:
+                    server.send('cat fail')
+                elif text != "":
+                    server.send(text)
 
             elif tokens[0] == 'mkdir': # make dir
                 # 2 tokens
-                print('mkdir not implemented')
+                if self.mkdir(tokens[1]):
+                    server.send('mkdir OK')
+                else:
+                    server.send('mkdir fail :(')
+            
+            elif tokens[0] == 'touch':
+                if self.touch(tokens[1]):
+                    server.send('touch OK')
+                else:
+                    server.send('touch fail')
+
+            elif tokens[0] == 'echo':
+                file = tokens[1]
+                text = ' '.join(tokens[2:])
+                if self.echo(file, text):
+                    server.send('echo OK')
+                else:
+                    server.send('echo fail')
 
             elif tokens[0] == 'rm': # remove file/directory
                 # 2 tokens
@@ -159,18 +188,18 @@ class MainState(State):
             if file == 'etc':
                 continue
             temp = path+'/'+ file
-            if(self.check_permission(path)):
+            if(self.check_permission(temp)):
                 user_list.append(self.handler.decrypt(file))
             else:
                 user_list.append(file)
-            return '\n'.join(user_list)
+        return '  '.join(user_list)
         
     def cd(self, dir):
         dir = self.handler.encryptPath(dir)
         abs = os.path.abspath(dir)
-        if self.check_permission(abs) or not os.path.isdir(dir):
+        if not self.check_permission(abs) or not os.path.isdir(abs):
             return "path does not exist or you do not have permission to access it"
-        os.chdir(dir)
+        os.chdir(abs)
         return "success"
         
     #returns true if user has access, also checks for injection attempts   
@@ -362,9 +391,13 @@ class MainState(State):
         data = ""
         if self.check_permission(abs) and os.path.isfile(abs):
             with open(abs, 'r') as f:
-                data = self.handler.decrypt(f.read())
+                crypto = f.read()
+                if crypto:
+                    data = self.handler.decrypt(crypto)
+                else:
+                    data = ''
             f.close()
-        return data 
+        return data
         
                     
 

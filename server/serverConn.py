@@ -5,7 +5,7 @@ from cryptography.fernet import Fernet
 from authenticator import Authenticator
 import serverState
 
-BUFFER_SIZE = 2048
+BUFFER_SIZE = 4096
 
 class ServerConn:
 

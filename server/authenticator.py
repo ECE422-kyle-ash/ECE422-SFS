@@ -21,7 +21,7 @@ class Authenticator:
                     if (not os.path.isfile(path) and not os.path.isdir(path)):
                         checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
                     elif os.path.isfile(path):
-                        if get_checksum(path, algorithm="SHA256").decode() != temp[3]:
+                        if get_checksum(path, algorithm="SHA256") != temp[3]:
                             checkFailed.append(self.handler.decrypt(path.split("/")[-1]))
                     elif os.path.isdir(path):
                         if dirhash(path, 'sha256') != temp[3]:
