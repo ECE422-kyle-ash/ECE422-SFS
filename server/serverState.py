@@ -35,7 +35,12 @@ class AuthenticateState(State):
                 server.send('Create Failed')
         elif tokens[0] == 'login':
             if (self.authenticator.authenticate_user(tokens[1], tokens[2])):
+                (check, files) = self.authenticator.check_integrity(self.handler.encrypt(tokens[1]))
                 server.send('Login Success')
+                if not check:
+                    server.send('the following files and directories were modified\n'+"\n".join(files))
+                else:
+                    server.send('integrity okay')
                 self.login_user(server, tokens[1])
                 return
             else:
@@ -297,6 +302,8 @@ class MainState(State):
             f.close()
             return True
         return False
+    
+    
             
     
     def touch(self, name):
