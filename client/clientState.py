@@ -120,16 +120,20 @@ class MainState(State):
     def run(self, client):
         
         if self.isReceiving: # grab response from server...
-            message = client.receive()
-            if message == None: # server has closed connection
-                print('Error: Connection to server lost')
-                client.close()
-                return
-            elif message.__contains__('Shell'):
-                client.currentDir = message
-            else: # something has gone wrong
-                print('Error: Unexpected message from server')
-                client.close()
+            try:
+                message = client.receive()
+                if message == None: # server has closed connection
+                    print('Error: Connection to server lost')
+                    client.close()
+                    return
+                elif message.__contains__('Shell'):
+                    client.currentDir = message
+                else: # something has gone wrong
+                    print('Error: Unexpected message from server')
+                    client.close()
+                    return
+            except TimeoutError:
+                client.send('resend')
                 return
 
         # get user input
