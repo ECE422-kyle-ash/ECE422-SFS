@@ -57,35 +57,35 @@ class Client:
         message = self.fernet.decrypt(data).decode('utf-8')
         return message
 
-    def sendFile(self, filepath: str) -> bool:
-        with open(filepath, 'rb') as f:
-            while True:
-                data = f.read(1024)
-                if not data:
-                    break
-                crypto = self.fernet.encrypt(data)
-                # print(f'data: {len(data)} crpyto: {len(crypto)}')
-                self.s.send(crypto)
-                try:
-                    if not self.receive() == 'OK':
-                        print('Unexpected response from server')
-                        self.close()
-                        return False
-                except:
-                    print('Error: No response from Server')
-                    return False
-            crypto = self.fernet.encrypt(b'\04')
-            self.s.send(crypto)
-            try:
-                if self.receive() == 'EOFOK':
-                    return True
-                else:
-                    print('Unexpected response from server')
-                    self.close()
-                    return False
-            except:
-                print('Error: No response from Server')
-                return False
+    # def sendFile(self, filepath: str) -> bool:
+    #     with open(filepath, 'rb') as f:
+    #         while True:
+    #             data = f.read(1024)
+    #             if not data:
+    #                 break
+    #             crypto = self.fernet.encrypt(data)
+    #             # print(f'data: {len(data)} crpyto: {len(crypto)}')
+    #             self.s.send(crypto)
+    #             try:
+    #                 if not self.receive() == 'OK':
+    #                     print('Unexpected response from server')
+    #                     self.close()
+    #                     return False
+    #             except:
+    #                 print('Error: No response from Server')
+    #                 return False
+    #         crypto = self.fernet.encrypt(b'\04')
+    #         self.s.send(crypto)
+    #         try:
+    #             if self.receive() == 'EOFOK':
+    #                 return True
+    #             else:
+    #                 print('Unexpected response from server')
+    #                 self.close()
+    #                 return False
+    #         except:
+    #             print('Error: No response from Server')
+    #             return False
 
     def close(self) -> None:
         self.s.close()
