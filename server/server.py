@@ -5,6 +5,7 @@ import threading
 import logging
 
 from serverConn import ServerConn
+from encryption import EncryptionHandler
 
 class Server:
 
@@ -31,6 +32,11 @@ class Server:
         thread = threading.Thread(target = self.conns[-1].run, args=(), daemon=True)
         self.threads.append(thread)
         thread.start()
+
+    def listen(self):
+        handler = EncryptionHandler()
+        while True:
+            admin_input = input()
 
     def __close(self, serversocket):
         for connection in self.conns:

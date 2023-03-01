@@ -33,7 +33,7 @@ class LoginState(State):
             client.send(f'create {username} {pass1}')
             response = client.receive()
             if response == 'Create Success':
-                client.state = MainState()
+                self.login(client, username)
             else:
                 print('\nUsername already exists.\n')
 
@@ -43,9 +43,13 @@ class LoginState(State):
             client.send(f'login {username} {password}')
             response = client.receive()
             if response == 'Login Success':
-                client.state = MainState()
+                self.login(client, username)
             else:
                 print('\nIncorrect username and/or password.\n')
+    def login(self, client, username):
+        print(f'Logged into SFS user: {username}...')
+        client.state = MainState()
+        client.state.print_menu()
 
 # This handles the initial key exchange between client and server
 class ExchangeKeyState(State):
@@ -88,8 +92,25 @@ class ExchangeKeyState(State):
 # This is the main loop of the client CLI and appliction
 class MainState(State):
 
+    menu = []
+
     def __init__(self):
         self.isReceiving = True
+        self.menu.append('\nCommand menu:')
+        self.menu.append('ls - list contents of working dir')
+        self.menu.append('cd <dirName> - change the working dir')
+        self.menu.append('cat <fileName> - print out the contents of a text file')
+        self.menu.append('mkdir <dirName> - create a directory')
+        self.menu.append('touch <fileName> - create an empty file')
+        self.menu.append('echo <fileName> <file_contents> - append text to a text file')
+        self.menu.append('rm <fileName> - delete a file')
+        self.menu.append('rename <fileName> <new_fileName> - rename a file')
+        self.menu.append('menu - display this menu')
+        self.menu.append('exit - exit the SFS Shell\n')
+
+    def print_menu(self):
+        for item in self.menu:
+            print(item)
 
     def run(self, client):
         
