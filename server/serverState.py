@@ -363,13 +363,66 @@ class MainState(State):
         return False 
     
     def rename(self, current_name, new_name):
-        pass
+        
+        dir = self.handler.encryptPath(current_name)
+        abs = os.path.abspath(dir)
+        parent = os.path.dirname(abs)
+        temp = ""
+        if self.check_permission(abs) and os.path.isfile(abs):
+            os.rename(abs,self.handler.encrypt(new_name))
+            perms_file = self.handler.etc+'/permissions'
+            with open(perms_file,"w") as f:
+                lines = f.read().splitlines()
+                for line in lines:
+                    temp = line.split(" ")
+                    if(temp[0] == abs):
+                        temp[0] = self.handler.encrypt(os.path.abspath(new_name))
+                        temp[3] = get_checksum(os.path.abspath(new_name), algorithm="SHA256")
+                        line = ' '.join(temp)
+                    f.write(line) 
+            f.close()
+            self.update_checksum(parent)
+            return True
     
     def rm(self, fname):
-        pass
+        dir = self.handler.encryptPath(fname)
+        abs = os.path.abspath(dir)
+        parent = os.path.dirname(abs)
+        if self.check_permission(abs) and os.path.isfile(abs):
+            os.remove(abs)
+            perms_file = self.handler.etc+'/permissions'
+            with open(perms_file,"w") as f:
+                lines = f.read().splitlines()
+                for line in lines:
+                    temp = line.split(" ")
+                    if(temp[0] == abs):
+                        continue
+                    f.write(line)
+                    
+            f.close()
+            self.update_checksum(parent)
+            return True
+        return False 
     
     def chmod(self, fname, new_perm):
-        pass
+        dir = self.handler.encryptPath(fname)
+        abs = os.path.abspath(dir)
+        (owner, perm) = self.getFilePermAndOwner(abs)
+        if ((new_perm == "user" or new_perm == "group" or new_perm == "internal" )and self.current_user == owner):
+            if self.check_permission(abs) and os.path.isfile(abs):
+                perms_file = self.handler.etc+'/permissions'
+                with open(perms_file,"w") as f:
+                    lines = f.read().splitlines()
+                    for line in lines:
+                        temp = line.split(" ")
+                        if(temp[0] == abs):
+                            temp[2] = new_perm
+                            line = ' '.join(temp)
+                        f.write(line) 
+                f.close()
+                return True
+        return False
+        
     
     def echo(self, fname, text):
         dir = self.handler.encryptPath(fname)
