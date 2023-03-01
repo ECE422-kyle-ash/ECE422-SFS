@@ -43,9 +43,13 @@ class LoginState(State):
             client.send(f'login {username} {password}')
             response = client.receive()
             if response == 'Login Success':
+                response = client.receive()
+                if response != 'integrity okay':
+                    print(response)
                 self.login(client, username)
             else:
                 print('\nIncorrect username and/or password.\n')
+
     def login(self, client, username):
         print(f'Logged into SFS user: {username}...')
         client.state = MainState()
