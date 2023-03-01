@@ -58,28 +58,28 @@ class ServerConn:
             chunk = self.fernet.decrypt(chunk).decode('utf-8')
             chunks.append(chunk)
             if chunk.endswith('\x04'):
-                self.send('EOFOK')
+                # self.send('EOFOK')
                 message = (''.join(chunks))
                 return message.rstrip('\x04')
-            self.send('OK')
+            # self.send('OK')
 
-    def receiveFile(self, filename) -> bool:
-        content = self.receiveChunks()
-        if content: # save file
-            logging.info(f'Received contents of: {filename} from: {self.addr}')
-            return self.saveFile(filename, content)
-        return False
+    # def receiveFile(self, filename) -> bool:
+    #     content = self.receiveChunks()
+    #     if content: # save file
+    #         logging.info(f'Received contents of: {filename} from: {self.addr}')
+    #         return self.saveFile(filename, content)
+    #     return False
     
-    def saveFile(self, filename, content) -> bool: # todo ash
-        filepath = '../test/res_'+filename
-        logging.info(f'Saving content to {filepath}')
-        with open(filepath, 'w') as f:
-            try:
-                f.write(content)
-                f.close()
-                return True
-            except:
-                return False
+    # def saveFile(self, filename, content) -> bool: # todo ash
+    #     filepath = '../test/res_'+filename
+    #     logging.info(f'Saving content to {filepath}')
+    #     with open(filepath, 'w') as f:
+    #         try:
+    #             f.write(content)
+    #             f.close()
+    #             return True
+    #         except:
+    #             return False
     
     def close(self) -> None:
         if self.connOpen == True:

@@ -1,35 +1,73 @@
 
 import logging
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import serialization, hashes
 import os
 import encryption
 import re
 from simple_file_checksum import get_checksum
 from checksumdir import dirhash
 import bcrypt
+
+from authenticator import Authenticator
+
 class State:
 
     def run(self, server):
         return
     
 class AuthenticateState(State):
+    authenticator = Authenticator()
+    handler = encryption.EncryptionHandler()
 
     def run(self, server):
-        # logging.debug(f"entering auth state with client {server.addr}...")
-        # do auth stuff
-
-        # success
+        
+        command = server.receive()
+        tokens = command.split(' ')
+        if tokens[0] == 'create':
+            if (self.authenticator.create_user(tokens[1], tokens[2])):
+                server.send('Create Success')
+                # log user in
+                self.login_user(server, tokens[1])
+                return
+            else:
+                server.send('Create Failed')
+        elif tokens[0] == 'login':
+            if (self.authenticator.authenticate_user(tokens[1], tokens[2])):
+                server.send('Login Success')
+                self.login_user(server, tokens[1])
+                return
+            else:
+                server.send('Login Failed')
+    
+    def login_user(self, server, username):
         server.state = MainState()
+        server.state.username = username
+        server.state.current_user = self.handler.encrypt(username)
     
 class ExchangeKeyState(State):
 
     def run(self, server):
 
+        # get the clients public key
+        pem = server.conn.recv(4096)
+        public_key = serialization.load_pem_public_key(pem)
+
         # generate a key and save it to a block cipher through fernet
         key = Fernet.generate_key()
         server.fernet = Fernet(key)
 
-        server.conn.send(key)
+        cipherkey = public_key.encrypt(
+            key,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None
+            )
+        )
+
+        server.conn.send(cipherkey)
 
         if server.receive() == "OK": # success
             logging.info(f"ExchangeKeyState Success with {server.addr}")
@@ -45,6 +83,7 @@ class MainState(State):
     #for testing, assuming test user is looged in
     cwd = '/test'
     current_user = ""
+    username = ""
     def run(self, server):
         try:
             # show client their current position in the SFS shell
@@ -83,15 +122,15 @@ class MainState(State):
                 # 2 or 3 tokens
                 print('mv not implemented')
 
-            elif tokens[0] == 'send': # send file to server
-                # if user has permission to write file here:
-                server.send('sendOK')
-                if not server.receiveFile(tokens[1]):
-                    logging.error(f'Error: File not received')
+            # elif tokens[0] == 'send': # send file to server
+            #     # if user has permission to write file here:
+            #     server.send('sendOK')
+            #     if not server.receiveFile(tokens[1]):
+            #         logging.error(f'Error: File not received')
             
-            elif tokens[0] == 'download': # download file from server
-                # 2 arguments
-                print('download not implemented')
+            # elif tokens[0] == 'download': # download file from server
+            #     # 2 arguments
+            #     print('download not implemented')
         except Exception:
             server.close()
         return
@@ -222,27 +261,6 @@ class MainState(State):
             return True, checkFailed               
         return False ,checkFailed
     
-    def create_user(self, username, password):
-        users_file = self.handler.etc+'/users'
-        encrypted_username = self.handler.encrypt(username)
-        hashed_pw = bcrypt.hashpw(password.encode(),bcrypt.gensalt()).decode()
-        if self.check_username(encrypted_username):
-            with open(users_file,"a") as f:
-                f.write(encrypted_username+ " " + hashed_pw + " \n")
-            f.close()
-            return True
-        return False
-    
-    def check_username(self,username_encrypted):
-        users_file = self.handler.etc+'/users'
-        with open(users_file) as f:
-            lines = f.read().splitlines()
-            for line in lines:
-                temp = line.split(" ")
-                if(temp[0] == username_encrypted):
-                    return False
-        return True
-    
     def set_group(self,username,groupname):
         groups_file = self.handler.etc+'/permissions'
         encrypted_username = self.handler.encrypt(username)
@@ -267,18 +285,6 @@ class MainState(State):
         with open(groups_file,'w') as f:
             f.write(fdata)
         f.close()
-            
-    #return true if username, password exist, false otherwise
-    def authenticate_user(self,username,password):
-        users_file = self.handler.etc+'/users'
-        username_encrypted = self.handler.encrypt(username)
-        with open(users_file) as f:
-            lines = f.read().splitlines()
-            for line in lines:
-                temp = line.split(" ")
-                if(temp[0] == username_encrypted and bcrypt.checkpw(password.encode(), temp[1].encode())):
-                    return True
-        return False
     
     def mkdir(self, name):
         dir = self.handler.encryptPath(dir)
