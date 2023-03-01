@@ -53,7 +53,7 @@ class LoginState(State):
     def login(self, client, username):
         print(f'Logged into SFS user: {username}...')
         client.state = MainState()
-        client.state.print_menu()
+        print('\nWelcome to the SFS-Client!\nType \'menu\' for help.')
 
 # This handles the initial key exchange between client and server
 class ExchangeKeyState(State):
@@ -138,22 +138,71 @@ class MainState(State):
         if tokens[0] == 'ls': # show contends of dir
             # 1 token
             client.send(request)
-            print('ls not implemented')
+            message = client.receive()
+            if message != ' ':
+                print(message)
 
         elif tokens[0] == 'cd': # change dir
             # 2 tokens
-            client.send(request)
-            print('cd not implemented')
+            if len(tokens) == 2:
+                client.send(request)
+                message = client.receive()
+                if message != ' ':
+                    print(message)
+            else:
+                print('Usage: cd <dirName>')
+                self.isReceiving = False
+                return
 
         elif tokens[0] == 'cat': # read file
             # 2 tokens
-            client.send(request)
-            print('cat not implemented')
+            if len(tokens)==2:
+                client.send(request)
+                response = client.receive()
+                if response == 'cat fail':
+                    print('insufficient access, file does not exist or file is empty')
+                else:
+                    print(response)
+            else:
+                print('Usage: cat <fileName>')
+                self.isReceiving = False
+                return
 
         elif tokens[0] == 'mkdir': # make dir
             # 2 tokens
-            client.send(request)
-            print('mkdir not implemented')
+            if len(tokens)==2:
+                client.send(request)
+                response = client.receive()
+                if response == 'mkdir fail :(':
+                    print('insufficient access or directory already exists')
+            else:
+                print('Usage: mkdir <dirName>')
+                self.isReceiving = False
+                return
+        
+        elif tokens[0] == 'touch':
+            # 2 tokens
+            if len(tokens)==2:
+                client.send(request)
+                response = client.receive()
+                if response == 'touch fail':
+                    print('insufficient access or file already exists')
+            else:
+                print('Usage: touch <fileName>')
+                self.isReceiving = False
+                return
+        
+        elif tokens[0] == 'echo':
+            # atleast 3 tokens
+            if len(tokens) > 2:
+                client.send(request)
+                response = client.receive()
+                if response == 'echo fail':
+                    print('insufficient access or file does not exist')
+            else:
+                print('Usage: echo <fileName> <text>')
+                self.isReceiving = False
+                return
 
         elif tokens[0] == 'rm': # remove file/directory
             # 2 tokens
@@ -163,7 +212,12 @@ class MainState(State):
         elif tokens[0] == 'rename': # move or rename file/dir
             # 2 or 3 tokens
             client.send(request)
-            print('mv not implemented')
+            print('rename not implemented')
+
+        elif tokens[0] == 'menu':
+            self.print_menu()
+            self.isReceiving = False
+            return
 
         # elif tokens[0] == 'send': # send file to server
         #     # 2 tokens
