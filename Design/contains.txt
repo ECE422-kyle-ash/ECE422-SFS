@@ -1,0 +1,4 @@
+class diagram
+sequence diagram
+high-level architectural view
+state machine diagram
