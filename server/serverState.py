@@ -384,24 +384,30 @@ class MainState(State):
         abs = os.path.abspath(dir)
         parent = os.path.dirname(abs)
         temp = ""
+        new_path = abs.replace(dir, self.handler.encrypt(new_name))
+        print ("old path"+abs)
+        print("new path" + new_path)
         if self.check_permission(abs) and os.path.isfile(abs):
+            print("renaming")
             os.rename(abs,self.handler.encrypt(new_name))
             perms_file = self.handler.etc+'/permissions'
             data = ""
             with open(perms_file,"r") as r:
                 data = r.readlines()
             r.close()
+            print("read")
             with open(perms_file,"r+") as f:
                 lines = data
                 for line in lines:
                     temp = line.split(" ")
                     if(temp[0] == abs):
-                        temp[0] = self.handler.encryptPath(os.path.abspath(self.handler.encrypt(new_name)))
-                        temp[3] = get_checksum(os.path.abspath(self.handler.encrypt(new_name)), algorithm="SHA256")
-                        line = ' '.join(temp)
+                        temp[0] = new_path
+                        temp[3] = get_checksum(new_path, algorithm="SHA256")
+                    line = ' '.join(temp)
                     f.write(line) 
             f.close()
-            self.update_checksum()
+            print("wrote")
+            self.update_checksum(new_path)
             self.update_checksum_dir(parent)
             return True
     
