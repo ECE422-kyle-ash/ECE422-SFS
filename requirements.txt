@@ -1,4 +1,4 @@
 simple-file-checksum
 checksumdir
 cryptography
-pycrypto
+brypt

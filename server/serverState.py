@@ -479,7 +479,10 @@ class MainState(State):
             with open(abs, 'r') as f:
                 crypto = f.read()
                 if crypto:
-                    data = self.handler.decrypt(crypto)
+                    try:
+                        data = self.handler.decrypt(crypto)
+                    except Exception:
+                        return "file contents corrupted by hackerman"
                 else:
                     data = ''
             f.close()
