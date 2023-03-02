@@ -100,9 +100,8 @@ if __name__ == '__main__':
         port = sys.argv[2]
         client = Client(host = host, port = int(port))
     elif len(sys.argv) == 2:
-        host = 'localhost'
         port = sys.argv[1]
-        client = Client(host = host, port = int(port))
+        client = Client( port = int(port))
     else:
         client = Client()
     client.run()

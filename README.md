@@ -8,10 +8,10 @@ Ashutosh Lamba - alamba
 
 ---------------
 ### Installation:
-
-pip install cryptography<br>
-pip install pycrypto<br>
-pip install simple-file-checksum<br>
+sudo apt-get install python3-pip python-dev build-essential  <br>
+sudo pip install --upgrade pip <br>
+pip install -r requirements.txt <br>
+pip install --upgrade cryptography <br>
 sudo apt-get install build-essential cargo<br>
 
 ---------------
